@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
     Table, Card, Tag, Button, Modal, Form, Input, InputNumber, Select,
@@ -10,7 +10,7 @@ import {
     EnvironmentOutlined, DeleteOutlined, CompassOutlined, GlobalOutlined,
     BranchesOutlined, CheckCircleOutlined
 } from '@ant-design/icons';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AdvancedFilterBar from '../components/AdvancedFilterBar';
 
@@ -29,11 +29,9 @@ const STATUS_OPTIONS = [
 ];
 
 export default function AdminOperations() {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
     const navigate = useNavigate();
-    const routerLocation = useLocation();
-    const [searchParams, setSearchParams] = useSearchParams();
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
     // ── Shipment State ──
     const [shipments, setShipments] = useState([]);
@@ -44,7 +42,7 @@ export default function AdminOperations() {
         return status ? { status: [status] } : {};
     });
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-    const [assigning, setAssigning] = useState(false);
+    const [, setAssigning] = useState(false);
 
     // ── Vehicle State ──
     const [vehicles, setVehicles] = useState([]);
@@ -52,7 +50,7 @@ export default function AdminOperations() {
     const [vehLoading, setVehLoading] = useState(true);
 
     // ── Address labels (for company name lookup) ──
-    const [addressMap, setAddressMap] = useState({});
+    const [, setAddressMap] = useState({});
 
     // ── Create Trip State ──
     const [tripModal, setTripModal] = useState(false);
@@ -80,7 +78,7 @@ export default function AdminOperations() {
             setShipments(res.data);
         } catch { message.error('Failed to load shipments'); }
         setShipLoading(false);
-    }, [token]);
+    }, [headers]);
 
     const fetchVehiclesAndDrivers = useCallback(async () => {
         setVehLoading(true);
@@ -93,7 +91,7 @@ export default function AdminOperations() {
             setDrivers(uRes.data.filter(u => u.role === 'DRIVER'));
         } catch { message.error('Failed to load vehicles'); }
         setVehLoading(false);
-    }, [token]);
+    }, [headers]);
 
 
 
@@ -105,20 +103,20 @@ export default function AdminOperations() {
             res.data.forEach(a => { if (a.address) map[a.address.trim()] = a.label; });
             setAddressMap(map);
         } catch { /* non-critical, skip silently */ }
-    }, [token]);
+    }, [headers]);
 
     useEffect(() => {
         fetchShipments(filters);
         fetchVehiclesAndDrivers();
         fetchAddresses();
-    }, []);
+    }, [fetchAddresses, fetchShipments, fetchVehiclesAndDrivers, filters]);
 
 
 
     // ═══════════════════════════════════════════════
     // SHIPMENT HANDLERS
     // ═══════════════════════════════════════════════
-    const handleFilter = (newFilters) => { setFilters(newFilters); fetchShipments(newFilters); };
+    const handleFilter = (newFilters) => { setFilters(newFilters); };
 
     const rowSelection = {
         selectedRowKeys,

@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Table, Button, Typography, Tag, Space, Modal, Form, Input, InputNumber, message, Checkbox } from 'antd';
 import { PlusOutlined, EnvironmentOutlined, EditOutlined, DeleteOutlined, GlobalOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -16,22 +16,23 @@ export default function SavedLocations() {
     const [form] = Form.useForm();
     const [editingId, setEditingId] = useState(null);
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
-    const fetchLocations = async () => {
+    const fetchLocations = useCallback(async () => {
         setLoading(true);
         try {
             const res = await axios.get(`${API}/addresses`, { headers });
             setLocations(res.data);
-        } catch (error) {
+        } catch {
             message.error('Failed to load locations');
         }
         setLoading(false);
-    };
+    }, [headers]);
 
     useEffect(() => {
-        fetchLocations();
-    }, []);
+        const timer = setTimeout(fetchLocations, 0);
+        return () => clearTimeout(timer);
+    }, [fetchLocations]);
 
     const handleAddEdit = async (values) => {
         try {
@@ -67,7 +68,7 @@ export default function SavedLocations() {
                     await axios.delete(`${API}/addresses/${id}`, { headers });
                     message.success('Location deleted');
                     fetchLocations();
-                } catch (error) {
+                } catch {
                     message.error('Failed to delete location');
                 }
             }

@@ -1,8 +1,7 @@
 import { API_BASE_URL } from '../apiConfig';
-import React, { useState, useEffect, useCallback } from 'react';
-import { List, Typography, Card, Button, Badge, Tag, Space, message, Spin } from 'antd';
+import React from 'react';
+import { List, Typography, Card, Button, Badge, Tag, Space, Spin } from 'antd';
 import { BellOutlined, CheckOutlined, DeleteOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 
 const { Title, Text } = Typography;

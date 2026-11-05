@@ -67,7 +67,7 @@ export default function AssignOrdersModal({ open, onCancel, mode = 'PENDING', on
             message.success(`Assigned ${successCount} orders successfully`);
             if (onSuccess) onSuccess();
             onCancel();
-        } catch (error) {
+        } catch {
             message.error("Failed to assign some orders");
         } finally {
             setAssigning(false);

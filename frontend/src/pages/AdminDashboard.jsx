@@ -1,8 +1,7 @@
 import { API_BASE_URL } from '../apiConfig';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import AssignOrdersModal from '../components/AssignOrdersModal';
 import Analytics from './Analytics';
 import {
@@ -38,8 +37,6 @@ import {
 const { Title, Text } = Typography;
 
 export default function AdminDashboard() {
-    const { user } = useAuth();
-    const navigate = useNavigate();
     const [stats, setStats] = useState({
         scheduled_today: 0,
         vehicles_on_site: 0,
@@ -50,7 +47,7 @@ export default function AdminDashboard() {
     const [auditLogs, setAuditLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [assignModalOpen, setAssignModalOpen] = useState(false);
-    const [assignMode, setAssignMode] = useState('PENDING');
+    const [assignMode] = useState('PENDING');
 
     const fetchDashboardData = async () => {
         try {

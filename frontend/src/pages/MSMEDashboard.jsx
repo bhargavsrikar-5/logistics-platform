@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
     Card, Row, Col, Statistic, Button, Table, Modal, Form, Input,
@@ -17,30 +17,25 @@ import MSMEAnalyticsGraph from '../components/MSMEAnalyticsGraph';
 const { Title, Text } = Typography;
 const API = API_BASE_URL;
 export default function MSMEDashboard() {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
     const navigate = useNavigate();
-    const headers = { Authorization: `Bearer ${token}` };
 
     // ── Shipment State ──
     const [shipments, setShipments] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    // ── Company data ──
-    const [loadingCompanies, setLoadingCompanies] = useState(false);
 
     // ── Fetch Functions ──
-    const fetchShipments = async () => {
-        setLoading(true);
+    const fetchShipments = useCallback(async () => {
+        const headers = { Authorization: `Bearer ${token}` };
         try {
             const res = await axios.get(`${API}/shipments`, { headers });
             setShipments(res.data);
         } catch { message.error('Failed to load shipments'); }
-        setLoading(false);
-    };
+    }, [token]);
 
     useEffect(() => {
-        fetchShipments();
-    }, []);
+        const timer = setTimeout(fetchShipments, 0);
+        return () => clearTimeout(timer);
+    }, [fetchShipments]);
 
     // ── Shipment Stats ──
     const stats = {
@@ -52,7 +47,7 @@ export default function MSMEDashboard() {
 
 
     // ── Columns ──
-    const shipmentColumns = [
+    const _shipmentColumns = [
         {
             title: 'Tracking #', dataIndex: 'tracking_number', key: 'tracking_number',
             render: (t, r) => <a onClick={() => navigate(`/msme/shipments/${r.id}`)}>{t}</a>

@@ -54,7 +54,7 @@ export default function Vehicles() {
     }, [token]);
 
     useEffect(() => {
-        fetchVehiclesAndDrivers(filters);
+        fetchVehiclesAndDrivers();
     }, [fetchVehiclesAndDrivers]);
 
     const handleSave = async (values) => {

@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Card, Typography, Tag, Progress, Spin, message, Button, Descriptions, Divider } from 'antd';
@@ -141,7 +141,9 @@ export default function RouteTracking() {
                         const vRes = await axios.get(`${API}/vehicles`, { headers });
                         const v = vRes.data.find(v => v.id === res.data.assigned_vehicle_id);
                         if (v) setVehicle(v);
-                    } catch { }
+                    } catch {
+                        // Shipment tracking remains available if vehicle details cannot be loaded.
+                    }
                 }
                 // Fetch driver details
                 if (res.data.assigned_driver_id) {
@@ -149,7 +151,9 @@ export default function RouteTracking() {
                         const uRes = await axios.get(`${API}/users`, { headers });
                         const d = uRes.data.find(u => u.id === res.data.assigned_driver_id);
                         if (d) setDriver(d);
-                    } catch { }
+                    } catch {
+                        // Shipment tracking remains available if driver details cannot be loaded.
+                    }
                 }
 
                 // Resolve coordinates
@@ -417,7 +421,7 @@ export default function RouteTracking() {
                                 { key: 'STARTED', label: 'STARTED', progress: 50 },
                                 { key: 'DELIVERED', label: 'DELIVERED', progress: 95 },
                                 { key: 'CONFIRMED', label: 'CONFIRMED', progress: 100 },
-                            ].map((step, i) => {
+                            ].map(step => {
                                 const isCompleted = progress >= step.progress;
                                 const isCurrent = (
                                     (step.key === 'ASSIGNED' && shipment.status === 'ASSIGNED') ||

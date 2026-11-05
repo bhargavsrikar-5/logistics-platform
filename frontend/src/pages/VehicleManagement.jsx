@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Table, Card, Tag, Button, Modal, Form, Input, InputNumber, Select, Typography, Space, Progress, message, Switch, Tooltip } from 'antd';
 import { PlusOutlined, CarOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
@@ -19,7 +19,7 @@ const FilterSection = ({ onFilter }) => {
             <Form form={form} layout="inline" onFinish={onFilter}>
                 <Form.Item name="status" style={{ minWidth: 150 }}>
                     <Select placeholder="Filter by Status" allowClear mode="multiple">
-                        {Object.entries(STATUS_COLORS).map(([k, v]) => (
+                        {Object.keys(STATUS_COLORS).map(k => (
                             <Select.Option key={k} value={k}>{k.replace('_', ' ')}</Select.Option>
                         ))}
                     </Select>
@@ -57,9 +57,9 @@ export default function VehicleManagement() {
     const [form] = Form.useForm();
     const [cargoViewVehicle, setCargoViewVehicle] = useState(null);
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
-    const fetchData = async (filters = {}) => {
+    const fetchData = useCallback(async (filters = {}) => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
@@ -74,9 +74,12 @@ export default function VehicleManagement() {
             setDrivers(uRes.data.filter(u => u.role === 'DRIVER'));
         } catch { message.error('Failed to load data'); }
         setLoading(false);
-    };
+    }, [headers]);
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        const timer = setTimeout(fetchData, 0);
+        return () => clearTimeout(timer);
+    }, [fetchData]);
 
     const handleSave = async (values) => {
         try {

@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
     Card, Tag, Button, Typography, Space, message, Spin, DatePicker, Modal
@@ -15,9 +15,9 @@ import TruckCargoVisualizer from '../components/TruckCargoVisualizer';
 const { Title, Text } = Typography;
 const API = API_BASE_URL;
 export default function TrackOrders() {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
     const navigate = useNavigate();
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
     const [loading, setLoading] = useState(true);
     const [vehicles, setVehicles] = useState([]);
@@ -40,10 +40,11 @@ export default function TrackOrders() {
             message.error('Failed to load tracking data');
         }
         setLoading(false);
-    }, [token]);
+    }, [headers]);
 
     useEffect(() => {
-        fetchData();
+        const timer = setTimeout(fetchData, 0);
+        return () => clearTimeout(timer);
     }, [fetchData]);
 
     const getAssignedDisplayShipments = (vehicleId) => {

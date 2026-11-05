@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Table, Card, Tag, Button, Modal, Form, Input, Select, Typography, Space, message, ColorPicker } from 'antd';
 import { PlusOutlined, EnvironmentOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
@@ -17,18 +17,21 @@ export default function ZoneManagement() {
     const [editingZone, setEditingZone] = useState(null);
     const [form] = Form.useForm();
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
-    const fetchZones = async () => {
+    const fetchZones = useCallback(async () => {
         setLoading(true);
         try {
             const res = await axios.get(`${API}/zones`, { headers });
             setZones(res.data);
         } catch { message.error('Failed to load zones'); }
         setLoading(false);
-    };
+    }, [headers]);
 
-    useEffect(() => { fetchZones(); }, []);
+    useEffect(() => {
+        const timer = setTimeout(fetchZones, 0);
+        return () => clearTimeout(timer);
+    }, [fetchZones]);
 
     const handleSave = async (values) => {
         try {

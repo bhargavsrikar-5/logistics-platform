@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, Row, Col, Statistic, Table, Tag, Button, Typography, Space, message, Spin, Modal, Form, Input } from 'antd';
 import { CarOutlined, CheckCircleOutlined, ClockCircleOutlined, SendOutlined, DashboardOutlined } from '@ant-design/icons';
@@ -42,9 +42,9 @@ export default function DriverDashboard() {
     const [deliverForm] = Form.useForm();
     const [delivering, setDelivering] = useState(false);
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const [statsRes, shipmentsRes] = await Promise.all([
@@ -55,9 +55,12 @@ export default function DriverDashboard() {
             setShipments(shipmentsRes.data);
         } catch { message.error('Failed to load driver data'); }
         setLoading(false);
-    };
+    }, [headers]);
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        const timer = setTimeout(fetchData, 0);
+        return () => clearTimeout(timer);
+    }, [fetchData]);
 
     // "Start" = pickup + in-transit in one step
     const handleStart = async (id) => {
@@ -69,7 +72,7 @@ export default function DriverDashboard() {
             await axios.post(`${API}/shipments/${id}/in-transit`, {}, { headers });
             message.success('Shipment started! Status: In Transit');
             fetchData();
-        } catch (err) {
+        } catch {
             // If already picked up, try just in-transit
             try {
                 await axios.post(`${API}/shipments/${id}/in-transit`, {}, { headers });

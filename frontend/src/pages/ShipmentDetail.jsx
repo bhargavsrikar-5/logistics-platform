@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Card, Descriptions, Tag, Timeline, Typography, Button, Space, Divider, Row, Col, message, Modal, Form, Input, Spin, Table, Steps } from 'antd';
@@ -52,18 +52,21 @@ export default function ShipmentDetail() {
     const [deliverModalOpen, setDeliverModalOpen] = useState(false);
     const [deliverForm] = Form.useForm();
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
-    const fetchShipment = async () => {
+    const fetchShipment = useCallback(async () => {
         setLoading(true);
         try {
             const res = await axios.get(`${API}/shipments/${id}`, { headers });
             setShipment(res.data);
         } catch { message.error('Failed to load shipment'); }
         setLoading(false);
-    };
+    }, [headers, id]);
 
-    useEffect(() => { fetchShipment(); }, [id]);
+    useEffect(() => {
+        const timer = setTimeout(fetchShipment, 0);
+        return () => clearTimeout(timer);
+    }, [fetchShipment]);
 
     const performAction = async (action, body = null) => {
         setActionLoading(true);
@@ -89,7 +92,7 @@ export default function ShipmentDetail() {
             await axios.post(`${API}/shipments/${id}/in-transit`, {}, { headers });
             message.success('Shipment started!');
             fetchShipment();
-        } catch (err) {
+        } catch {
             // If already picked up, try just in-transit
             try {
                 await axios.post(`${API}/shipments/${id}/in-transit`, {}, { headers });
@@ -119,7 +122,6 @@ export default function ShipmentDetail() {
     const rawTimeline = (shipment.timeline || []).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     
     // Deduplicate: if both PICKED_UP and IN_TRANSIT exist, only show one "Started" entry (the IN_TRANSIT one)
-    const seenStarted = false;
     const dedupedTimeline = rawTimeline.reduce((acc, entry) => {
         const label = TIMELINE_LABEL_MAP[entry.status] || entry.status;
         // Skip PICKED_UP if IN_TRANSIT already exists or will exist
@@ -307,7 +309,7 @@ export default function ShipmentDetail() {
                     {shipment.items?.length > 0 ? (
                         <Card title={`Items (${shipment.items.length})`} bordered={false}>
                             <Row gutter={[16, 16]}>
-                                {shipment.items.map((item, i) => (
+                                {shipment.items.map(item => (
                                     <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
                                         <Card type="inner" size="small" style={{ background: '#fafafa' }}>
                                             <div style={{ fontWeight: 600, marginBottom: 4 }}>{item.name}</div>

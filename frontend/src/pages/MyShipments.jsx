@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Table, Tag, Typography, Button, message, Card, Modal, Select, Form, Input, InputNumber, Space, DatePicker, Row, Col } from 'antd';
 import { EyeOutlined, CompassOutlined, PlusOutlined, ClockCircleOutlined, SendOutlined, CheckCircleOutlined, ShoppingOutlined } from '@ant-design/icons';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AdvancedFilterBar from '../components/AdvancedFilterBar';
 
@@ -27,7 +27,6 @@ const STATUS_OPTIONS = [
 export default function MyShipments() {
     const { token, user } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
     const [shipments, setShipments] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -89,7 +88,7 @@ export default function MyShipments() {
             try {
                 const res = await axios.get(`${API}/vehicles`, { headers });
                 setVehicles(res.data);
-            } catch (err) {
+            } catch {
                 console.error("Failed to load vehicles");
             }
         }
@@ -167,7 +166,7 @@ export default function MyShipments() {
             setSelectedVehicle(null);
             fetchShipments(filters);
             fetchVehicles(); // Update vehicle capacities
-        } catch (error) {
+        } catch {
             message.error("Bulk assignment failed");
         } finally {
             setAssigning(false);
@@ -404,7 +403,6 @@ export default function MyShipments() {
                     value={selectedVehicle}
                     options={vehicles.map(v => {
                         const remainingWt = v.weight_capacity - v.current_weight_used;
-                        const remainingVol = v.volume_capacity - v.current_volume_used;
                         return {
                             value: v.id,
                             label: (

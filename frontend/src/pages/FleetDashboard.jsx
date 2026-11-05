@@ -13,18 +13,16 @@ const { Title, Text } = Typography;
 const API = API_BASE_URL;
 
 export default function FleetDashboard() {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
     const navigate = useNavigate();
     const [fleetStats, setFleetStats] = useState({});
     const [shipmentStats, setShipmentStats] = useState({});
-    const [loading, setLoading] = useState(true);
     const basePath = '/admin';
 
     const headers = { Authorization: `Bearer ${token}` };
 
     useEffect(() => {
         const fetchData = async () => {
-            setLoading(true);
             try {
                 const [fleet, shipments] = await Promise.all([
                     axios.get(`${API}/fleet/stats`, { headers }),
@@ -33,7 +31,6 @@ export default function FleetDashboard() {
                 setFleetStats(fleet.data);
                 setShipmentStats(shipments.data);
             } catch { message.error('Failed to load fleet data'); }
-            setLoading(false);
         };
         fetchData();
     }, []);

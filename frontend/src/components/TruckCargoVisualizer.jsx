@@ -3,12 +3,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, RoundedBox, Text, ContactShadows, Float } from '@react-three/drei';
 import * as THREE from 'three';
 
-function getFillColor(pct) {
+function getFillColor() {
   return '#facc15';
-}
-
-function getGlowColor(pct) {
-  return '#93c5fd';
 }
 
 function CargoBox({ position, size, color, tapeColor }) {
@@ -308,7 +304,7 @@ function CameraRig() {
   useEffect(() => {
     camera.position.set(3.5, 2.5, 3.5);
     camera.lookAt(0, 0, 0);
-  }, []);
+  }, [camera]);
   return null;
 }
 
@@ -340,8 +336,6 @@ export default function TruckCargoVisualizer({
   plateNumber = '',
   items = [],
   style = {},
-  height = 420,
-  showLabels = true,
 }) {
   const containerRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -381,8 +375,6 @@ export default function TruckCargoVisualizer({
     document.addEventListener('fullscreenchange', handler);
     return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
-
-  const boxesCount = Math.round(displayPct * 20); // rough estimate logic
 
   return (
     <div

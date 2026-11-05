@@ -31,7 +31,6 @@ const SUGGESTIONS = [
 
 const GlobalSearchBar = () => {
     const [options, setOptions] = useState([]);
-    const [loading, setLoading] = useState(false);
     const { user, token } = useAuth();
     const navigate = useNavigate();
     const debounceRef = useRef(null);
@@ -142,7 +141,6 @@ const GlobalSearchBar = () => {
             return;
         }
 
-        setLoading(true);
         debounceRef.current = setTimeout(async () => {
             try {
                 const res = await axios.get(`${API}/search/global`, {
@@ -192,8 +190,6 @@ const GlobalSearchBar = () => {
                 setOptions(newOptions);
             } catch (err) {
                 console.error("Search failed", err);
-            } finally {
-                setLoading(false);
             }
         }, 400);
     };

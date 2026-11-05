@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 /**
  * LocationPickerMap — Leaflet-based map for selecting a location.
@@ -14,52 +14,7 @@ export default function LocationPickerMap({ onLocationSelect, initialPosition, f
     const pendingFlyTo = useRef(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (window.L && mapRef.current && !mapInstanceRef.current) {
-            initMap();
-            return;
-        }
-
-        if (!document.getElementById('leaflet-css')) {
-            const link = document.createElement('link');
-            link.id = 'leaflet-css';
-            link.rel = 'stylesheet';
-            link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-            document.head.appendChild(link);
-        }
-
-        if (!window.L) {
-            const script = document.createElement('script');
-            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-            script.onload = () => initMap();
-            document.head.appendChild(script);
-        } else {
-            initMap();
-        }
-
-        return () => {
-            if (mapInstanceRef.current) {
-                mapInstanceRef.current.remove();
-                mapInstanceRef.current = null;
-            }
-        };
-    }, []);
-
-    // When flyTo prop changes, fly the map (or store pending if not ready)
-    useEffect(() => {
-        if (!flyTo) return;
-        const [lat, lng] = flyTo;
-        if (isNaN(lat) || isNaN(lng)) return;
-
-        if (mapInstanceRef.current) {
-            doFlyTo(lat, lng);
-        } else {
-            // Map not ready yet — store and apply once initMap runs
-            pendingFlyTo.current = [lat, lng];
-        }
-    }, [flyTo]);
-
-    const doFlyTo = (lat, lng) => {
+    const doFlyTo = useCallback((lat, lng) => {
         const map = mapInstanceRef.current;
         if (!map) return;
 
@@ -82,9 +37,9 @@ export default function LocationPickerMap({ onLocationSelect, initialPosition, f
             .catch(() => {
                 if (onLocationSelect) onLocationSelect({ lat, lng, address: `${lat}, ${lng}` });
             });
-    };
+    }, [onLocationSelect]);
 
-    const initMap = () => {
+    const initMap = useCallback(() => {
         if (!mapRef.current || mapInstanceRef.current) return;
 
         const defaultCenter = initialPosition || [12.97, 77.59];
@@ -131,7 +86,53 @@ export default function LocationPickerMap({ onLocationSelect, initialPosition, f
                 onLocationSelect({ lat, lng, address });
             }
         });
-    };
+    }, [doFlyTo, initialPosition, onLocationSelect]);
+
+    useEffect(() => {
+        if (!document.getElementById('leaflet-css')) {
+            const link = document.createElement('link');
+            link.id = 'leaflet-css';
+            link.rel = 'stylesheet';
+            link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+            document.head.appendChild(link);
+        }
+
+        if (!window.L) {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.onload = initMap;
+            document.head.appendChild(script);
+        } else {
+            const timer = setTimeout(initMap, 0);
+            return () => {
+                clearTimeout(timer);
+                if (mapInstanceRef.current) {
+                    mapInstanceRef.current.remove();
+                    mapInstanceRef.current = null;
+                }
+            };
+        }
+
+        return () => {
+            if (mapInstanceRef.current) {
+                mapInstanceRef.current.remove();
+                mapInstanceRef.current = null;
+            }
+        };
+    }, [initMap]);
+
+    // When flyTo prop changes, fly the map (or store pending if not ready)
+    useEffect(() => {
+        if (!flyTo) return;
+        const [lat, lng] = flyTo;
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        if (mapInstanceRef.current) {
+            doFlyTo(lat, lng);
+        } else {
+            pendingFlyTo.current = [lat, lng];
+        }
+    }, [doFlyTo, flyTo]);
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>

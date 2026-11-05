@@ -41,7 +41,7 @@ export const NotificationProvider = ({ children }) => {
 
             setNotifications(data);
             setUnreadCount(newUnread);
-        } catch (error) {
+        } catch {
             console.error('Failed to load notifications');
         } finally {
             setLoading(false);
@@ -64,7 +64,7 @@ export const NotificationProvider = ({ children }) => {
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
             setUnreadCount(prev => Math.max(0, prev - 1));
             prevUnreadRef.current = Math.max(0, prevUnreadRef.current - 1);
-        } catch (error) {
+        } catch {
             message.error('Failed to mark as read');
         }
     };
@@ -78,7 +78,7 @@ export const NotificationProvider = ({ children }) => {
             setUnreadCount(0);
             prevUnreadRef.current = 0;
             message.success('All notifications marked as read');
-        } catch (error) {
+        } catch {
             message.error('Failed to mark all as read');
         }
     };

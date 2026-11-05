@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState } from 'react';
 
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Layout, Menu, Avatar, Dropdown, Typography, Tag, Badge, theme, Tooltip, Button } from 'antd';
-import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
 import {
   DashboardOutlined,
@@ -79,7 +78,7 @@ const getMenuItems = (role) => {
 };
 
 export default function AppLayout({ children }) {
-  const { user, token, logout } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);

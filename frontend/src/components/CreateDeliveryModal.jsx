@@ -24,7 +24,6 @@ import {
     UploadOutlined,
     InboxOutlined,
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
 
 const { Text } = Typography;
 

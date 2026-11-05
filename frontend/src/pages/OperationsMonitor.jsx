@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, Row, Col, Tag, Table, Typography, Badge, Statistic, Space, Button, message, Spin, Tabs } from 'antd';
 import { ReloadOutlined, SendOutlined, CarOutlined, EnvironmentOutlined, ClockCircleOutlined } from '@ant-design/icons';
@@ -20,9 +20,9 @@ export default function OperationsMonitor() {
     const [loading, setLoading] = useState(true);
     const intervalRef = useRef(null);
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const [opsRes, alertRes, auditRes] = await Promise.all([
                 axios.get(`${API}/operations/dashboard`, { headers }),
@@ -34,13 +34,13 @@ export default function OperationsMonitor() {
             setAuditLogs(auditRes.data);
         } catch { message.error('Failed to load operations data'); }
         setLoading(false);
-    };
+    }, [headers]);
 
     useEffect(() => {
-        fetchData();
+        const timer = setTimeout(fetchData, 0);
         intervalRef.current = setInterval(fetchData, 60000); // Auto-refresh every 60s
-        return () => clearInterval(intervalRef.current);
-    }, []);
+        return () => { clearTimeout(timer); clearInterval(intervalRef.current); };
+    }, [fetchData]);
 
     if (loading) return <div style={{ textAlign: 'center', padding: 80 }}><Spin size="large" /></div>;
 

@@ -2,7 +2,6 @@ import { API_BASE_URL } from '../apiConfig';
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useModal } from '../context/ModalContext';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Card, Form, Input, Button, Typography, Space, Row, Col } from 'antd';
 import { LockOutlined, KeyOutlined } from '@ant-design/icons';
@@ -11,18 +10,9 @@ import './MSMEPortal.css';
 const { Title, Text } = Typography;
 
 export default function Settings() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const { user } = useAuth();
 
   if (!user) return <div style={{ padding: 32 }}>Loading user profile...</div>;
-
-  const roleColor = user.role === 'ADMIN' ? 'purple' : user.role === 'DRIVER' ? 'green' : 'blue';
-  const initials = (user.email || '').substring(0, 2).toUpperCase();
 
   return (
     <div>

@@ -10,7 +10,17 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(localStorage.getItem('token')));
+
+  function logout() {
+    setUser(null);
+    setToken(null);
+    setLoading(false);
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    delete axios.defaults.headers.common['Authorization'];
+    window.location.href = '/login';
+  }
 
   useEffect(() => {
     if (token) {
@@ -28,7 +38,6 @@ export const AuthProvider = ({ children }) => {
         .finally(() => setLoading(false));
     } else {
       delete axios.defaults.headers.common['Authorization'];
-      setLoading(false);
     }
   }, [token]);
 
@@ -72,15 +81,6 @@ export const AuthProvider = ({ children }) => {
       console.error("Login failed", err);
       throw err;
     }
-  };
-
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    delete axios.defaults.headers.common['Authorization'];
-    window.location.href = '/login';
   };
 
   const signupMSME = async (data) => {

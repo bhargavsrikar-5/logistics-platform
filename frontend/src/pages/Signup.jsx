@@ -59,6 +59,7 @@ export default function Signup() {
             setError(null);
             setStep(1);
         } catch {
+            // Keep the current step when optional validation fails.
         }
     };
 

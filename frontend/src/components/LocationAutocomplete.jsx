@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect } from 'react';
-import { AutoComplete, Input, message } from 'antd';
+import { useState } from 'react';
+import { AutoComplete, Input } from 'antd';
 import { EnvironmentOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -14,7 +14,6 @@ export default function LocationAutocomplete({
 }) {
     const { token } = useAuth();
     const [options, setOptions] = useState([]);
-    const [searching, setSearching] = useState(false);
 
     const handleSearch = async (val) => {
         if (!val || val.length < 2) {
@@ -22,7 +21,6 @@ export default function LocationAutocomplete({
             return;
         }
 
-        setSearching(true);
         try {
             const res = await axios.get(`${API}/locations/autocomplete?q=${encodeURIComponent(val)}`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -38,8 +36,6 @@ export default function LocationAutocomplete({
             })));
         } catch (err) {
             console.error("Autocomplete failed", err);
-        } finally {
-            setSearching(false);
         }
     };
 
