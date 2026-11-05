@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, Table, Tag, Typography, Space, Spin, Statistic, Row, Col, message, Empty } from 'antd';
 import { CheckCircleOutlined, ClockCircleOutlined, CarOutlined, EnvironmentOutlined } from '@ant-design/icons';
@@ -17,7 +17,7 @@ export default function DriverHistory() {
     const [shipments, setShipments] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -35,7 +35,7 @@ export default function DriverHistory() {
             setLoading(false);
         };
         fetchHistory();
-    }, []);
+    }, [headers]);
 
     const columns = [
         {

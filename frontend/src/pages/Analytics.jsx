@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, Row, Col, Statistic, Typography, Table, Tag, Space, message, Spin, Progress, Button } from 'antd';
 import {
@@ -23,7 +23,7 @@ export default function Analytics({ embedded = false }) {
     const [driverAnalytics, setDriverAnalytics] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -41,7 +41,7 @@ export default function Analytics({ embedded = false }) {
             setLoading(false);
         };
         fetchData();
-    }, []);
+    }, [headers]);
 
     const handleExport = async () => {
         try {

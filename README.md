@@ -7,7 +7,7 @@ A full-stack logistics operations application that brings shipment intake, compa
 ## What it includes
 
 - **Company and user management:** company registration, join requests, approval workflows, and role-based access for administrators, MSME users, and drivers.
-- **Shipment lifecycle:** create, update, dispatch, assign, pick up, transit, deliver, upload a delivery receipt, and confirm receipt.
+- **Shipment lifecycle:** create, update, dispatch, assign, pick up, transit, deliver, and confirm receipt.
 - **Fleet operations:** vehicles, capacity/utilization, zones, and driver assignment.
 - **Trip planning:** group pending shipments into a trip, validate the company/driver/vehicle relationship and combined capacity, order stops using the available route-optimization strategy, and track driver location.
 - **Operations visibility:** dashboard metrics, shipment and driver analytics, audit history, notifications, exports, and shipment tracking.

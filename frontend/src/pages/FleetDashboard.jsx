@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, Row, Col, Statistic, Typography, Tag, Progress, Table, Button, Space, message } from 'antd';
 import {
@@ -19,7 +19,7 @@ export default function FleetDashboard() {
     const [shipmentStats, setShipmentStats] = useState({});
     const basePath = '/admin';
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -33,7 +33,7 @@ export default function FleetDashboard() {
             } catch { message.error('Failed to load fleet data'); }
         };
         fetchData();
-    }, []);
+    }, [headers]);
 
     return (
         <div>

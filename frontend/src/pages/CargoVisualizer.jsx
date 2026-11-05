@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   Card, Row, Col, Select, Typography, Space, Tag, Slider,
@@ -35,9 +35,9 @@ export default function CargoVisualizer() {
   const [filterType, setFilterType] = useState(null);
   const [filterStatus, setFilterStatus] = useState(null);
 
-  const headers = { Authorization: `Bearer ${token}` };
+  const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [vRes, sRes] = await Promise.all([
@@ -46,16 +46,14 @@ export default function CargoVisualizer() {
       ]);
       setVehicles(vRes.data);
       setShipments(sRes.data);
-      if (vRes.data.length > 0 && !selectedVehicleId) {
-        setSelectedVehicleId(vRes.data[0].id);
-      }
+      if (vRes.data.length > 0) setSelectedVehicleId(currentId => currentId || vRes.data[0].id);
     } catch {
       message.error('Failed to load data');
     }
     setLoading(false);
-  };
+  }, [headers]);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const filteredVehicles = useMemo(() => {
     let result = vehicles;

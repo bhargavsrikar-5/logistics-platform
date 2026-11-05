@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Modal, Row, Col, Card, List, Button, Tag, message, Typography, Input, Divider, Space, Badge } from 'antd';
 import { SearchOutlined, UserOutlined, CarOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -9,7 +9,7 @@ const { Text, Title } = Typography;
 const API = API_BASE_URL;
 export default function AssignOrdersModal({ open, onCancel, mode = 'PENDING', onSuccess }) {
     const { token } = useAuth();
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
     const [orders, setOrders] = useState([]);
     const [vehicles, setVehicles] = useState([]);
@@ -18,15 +18,7 @@ export default function AssignOrdersModal({ open, onCancel, mode = 'PENDING', on
     const [selectedVehicle, setSelectedVehicle] = useState(null);
     const [assigning, setAssigning] = useState(false);
 
-    useEffect(() => {
-        if (open) {
-            fetchData();
-            setSelectedOrders([]);
-            setSelectedVehicle(null);
-        }
-    }, [open, mode]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const statusParams = mode === 'PENDING' ? 'PENDING' : 'ASSIGNED';
@@ -41,7 +33,15 @@ export default function AssignOrdersModal({ open, onCancel, mode = 'PENDING', on
         } finally {
             setLoading(false);
         }
-    };
+    }, [headers, mode]);
+
+    useEffect(() => {
+        if (open) {
+            fetchData();
+            setSelectedOrders([]);
+            setSelectedVehicle(null);
+        }
+    }, [fetchData, open]);
 
     const handleAssign = async () => {
         if (selectedOrders.length === 0 || !selectedVehicle) return;

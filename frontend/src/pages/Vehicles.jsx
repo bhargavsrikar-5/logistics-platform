@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
     Table, Card, Tag, Button, Modal, Form, Input, InputNumber, Select,
@@ -23,7 +23,7 @@ const VEHICLE_STATUS_COLORS = {
 
 export default function Vehicles() {
     const { token } = useAuth();
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
     const [vehicles, setVehicles] = useState([]);
     const [drivers, setDrivers] = useState([]);
@@ -51,7 +51,7 @@ export default function Vehicles() {
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [headers]);
 
     useEffect(() => {
         fetchVehiclesAndDrivers();

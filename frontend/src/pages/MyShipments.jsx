@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Table, Tag, Typography, Button, message, Card, Modal, Select, Form, Input, InputNumber, Space, DatePicker, Row, Col } from 'antd';
 import { EyeOutlined, CompassOutlined, PlusOutlined, ClockCircleOutlined, SendOutlined, CheckCircleOutlined, ShoppingOutlined } from '@ant-design/icons';
@@ -53,7 +53,7 @@ export default function MyShipments() {
     const [savedAddresses, setSavedAddresses] = useState([]);
     const [loadingCompanies, setLoadingCompanies] = useState(false);
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
     const basePath = user?.role === 'MSME' ? '/msme' : user?.role === 'DRIVER' ? '/driver' : '/admin';
 
     const fetchShipments = useCallback(async (currentFilters = {}) => {
@@ -81,7 +81,7 @@ export default function MyShipments() {
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [headers]);
 
     const fetchVehicles = useCallback(async () => {
         if (user?.role === 'ADMIN') {
@@ -92,7 +92,7 @@ export default function MyShipments() {
                 console.error("Failed to load vehicles");
             }
         }
-    }, [user, token]);
+    }, [user, headers]);
 
     const fetchCompanies = useCallback(async () => {
         if (user?.role !== 'MSME') return;
@@ -106,13 +106,13 @@ export default function MyShipments() {
             setSavedAddresses(addrRes.data);
         } catch { message.warning('Could not load company data'); }
         setLoadingCompanies(false);
-    }, [user, token]);
+    }, [user, headers]);
 
     useEffect(() => {
         fetchShipments(filters);
         fetchVehicles();
         fetchCompanies();
-    }, [fetchShipments, fetchVehicles, fetchCompanies]);
+    }, [fetchShipments, fetchVehicles, fetchCompanies, filters]);
 
     const onSelectChange = (newSelectedRowKeys) => {
         setSelectedRowKeys(newSelectedRowKeys);
@@ -270,7 +270,6 @@ export default function MyShipments() {
 
     const handleFilter = (newFilters) => {
         setFilters(newFilters);
-        fetchShipments(newFilters);
     };
 
     const columns = [

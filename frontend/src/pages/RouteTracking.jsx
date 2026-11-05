@@ -125,7 +125,7 @@ export default function RouteTracking() {
     const [drop, setDrop] = useState(null);
     const animRef = useRef(null);
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
     const basePath = user?.role === 'MSME' ? '/msme' : user?.role === 'DRIVER' ? '/driver' : '/admin';
 
     useEffect(() => {
@@ -186,7 +186,7 @@ export default function RouteTracking() {
             setLoading(false);
         };
         fetchData();
-    }, [id]);
+    }, [headers, id]);
 
     const routePoints = useMemo(() => {
         if (!pickup || !drop) return [];

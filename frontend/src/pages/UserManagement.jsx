@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
@@ -24,13 +24,13 @@ const ROLE_LABELS = {
 
 export default function UserManagement() {
     const { token } = useAuth();
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         try {
             setLoading(true);
             const res = await axios.get(`${API_BASE_URL}/users`, { headers });
@@ -40,9 +40,9 @@ export default function UserManagement() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [headers]);
 
-    useEffect(() => { fetchUsers(); }, []);
+    useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
     const columns = [
         {
