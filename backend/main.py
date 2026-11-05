@@ -45,7 +45,7 @@ def shipment_visibility_clause(user: models.User):
         company_user_ids = select(models.User.id).where(models.User.company_id == user.company_id)
         return (models.Shipment.assigned_driver_id == user.id) & models.Shipment.sender_id.in_(company_user_ids)
     if user.role == models.UserRole.ADMIN and user.company_id:
-        company_user_ids = select(models.User.id).where(models.User.company_id == company_id)
+        company_user_ids = select(models.User.id).where(models.User.company_id == user.company_id)
         return models.Shipment.sender_id.in_(company_user_ids)
     raise HTTPException(status_code=403, detail="Not authorized to access shipments")
 
