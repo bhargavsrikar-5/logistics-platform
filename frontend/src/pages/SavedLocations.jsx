@@ -1,0 +1,166 @@
+import { API_BASE_URL } from '../apiConfig';
+import { useState, useEffect } from 'react';
+import { Card, Table, Button, Typography, Tag, Space, Modal, Form, Input, InputNumber, message, Checkbox } from 'antd';
+import { PlusOutlined, EnvironmentOutlined, EditOutlined, DeleteOutlined, GlobalOutlined } from '@ant-design/icons';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+
+const API = API_BASE_URL;
+const { Title } = Typography;
+
+export default function SavedLocations() {
+    const { token, user } = useAuth();
+    const [locations, setLocations] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [form] = Form.useForm();
+    const [editingId, setEditingId] = useState(null);
+
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const fetchLocations = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get(`${API}/addresses`, { headers });
+            setLocations(res.data);
+        } catch (error) {
+            message.error('Failed to load locations');
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchLocations();
+    }, []);
+
+    const handleAddEdit = async (values) => {
+        try {
+            const payload = { ...values, is_global: true };
+            if (editingId) {
+                await axios.put(`${API}/addresses/${editingId}`, payload, { headers });
+                message.success('Location updated successfully');
+            } else {
+                await axios.post(`${API}/addresses`, payload, { headers });
+                message.success('Location added successfully');
+            }
+            setIsModalOpen(false);
+            form.resetFields();
+            setEditingId(null);
+            fetchLocations();
+        } catch (error) {
+            message.error(error.response?.data?.detail || 'Operation failed');
+        }
+    };
+
+    const openEdit = (record) => {
+        setEditingId(record.id);
+        form.setFieldsValue(record);
+        setIsModalOpen(true);
+    };
+
+    const handleDelete = (id) => {
+        Modal.confirm({
+            title: 'Are you sure?',
+            content: 'This location will be removed.',
+            onOk: async () => {
+                try {
+                    await axios.delete(`${API}/addresses/${id}`, { headers });
+                    message.success('Location deleted');
+                    fetchLocations();
+                } catch (error) {
+                    message.error('Failed to delete location');
+                }
+            }
+        });
+    };
+
+    const columns = [
+        {
+            title: 'Company', key: 'label',
+            render: (_, r) => (
+                <span style={{ fontWeight: 500 }}>{r.label}</span>
+            )
+        },
+        { title: 'Address', dataIndex: 'address', key: 'address' },
+        {
+            title: 'Contact Details', key: 'contact',
+            render: (_, r) => (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span>{r.contact ? r.contact : `${r.label.split(' ')[0]} Manager`}</span>
+                    <span style={{ color: '#666', fontSize: '12px' }}>{r.phone ? r.phone : '+91 98765 43210'}</span>
+                </div>
+            )
+        },
+        {
+            title: 'Actions', key: 'actions', width: 120,
+            render: (_, r) => (
+                <Space>
+                    <Button icon={<EditOutlined />} size="small" onClick={() => openEdit(r)} />
+                    <Button icon={<DeleteOutlined />} size="small" danger onClick={() => handleDelete(r.id)} />
+                </Space>
+            )
+        }
+    ];
+
+    // Remove Actions column for MSME users
+    const filteredColumns = user?.role === 'ADMIN' ? columns : columns.filter(c => c.key !== 'actions');
+
+    return (
+        <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <Title level={3} style={{ margin: 0 }}>Saved Company Locations</Title>
+                {user?.role === 'ADMIN' && (
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingId(null); form.resetFields(); setIsModalOpen(true); }}>
+                        Add Location
+                    </Button>
+                )}
+            </div>
+
+            <Card bordered={false}>
+                <Table
+                    columns={filteredColumns}
+                    dataSource={locations}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={false}
+                />
+            </Card>
+
+            <Modal
+                title={editingId ? "Edit Location" : "Add New Location"}
+                open={isModalOpen}
+                onCancel={() => setIsModalOpen(false)}
+                footer={null}
+            >
+                <Form form={form} layout="vertical" onFinish={handleAddEdit}>
+                    <Form.Item name="label" label="Location Name" rules={[{ required: true }]}>
+                        <Input placeholder="Enter location name" />
+                    </Form.Item>
+                    <Form.Item name="address" label="Full Address" rules={[{ required: true }]}>
+                        <Input.TextArea rows={2} placeholder="Complete address" />
+                    </Form.Item>
+                    <Space style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                        <Form.Item name="lat" label="GPS Latitude" rules={[{ required: true }]}>
+                            <InputNumber style={{ width: 150 }} precision={6} placeholder="e.g. 19.0760" />
+                        </Form.Item>
+                        <Form.Item name="lng" label="GPS Longitude" rules={[{ required: true }]}>
+                            <InputNumber style={{ width: 150 }} precision={6} placeholder="e.g. 72.8777" />
+                        </Form.Item>
+                    </Space>
+                    <Form.Item name="phone" label="Phone Number" rules={[
+                            { required: true, message: 'Phone number is required' },
+                            { len: 10, message: 'Must be exactly 10 digits' },
+                            { pattern: /^[0-9]{10}$/, message: 'Only numbers are allowed' }
+                        ]}>
+                            <Input placeholder="Enter phone number" maxLength={10} />
+                    </Form.Item>
+
+                    <div style={{ textAlign: 'right', marginTop: 16 }}>
+                        <Button onClick={() => setIsModalOpen(false)} style={{ marginRight: 8 }}>Cancel</Button>
+                        <Button type="primary" htmlType="submit">Save Location</Button>
+                    </div>
+                </Form>
+            </Modal>
+        </div>
+    );
+}

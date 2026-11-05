@@ -1,0 +1,391 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { Layout, Menu, Avatar, Dropdown, Typography, Tag, Badge, theme, Tooltip, Button } from 'antd';
+import axios from 'axios';
+import { useNotification } from '../context/NotificationContext';
+import {
+  DashboardOutlined,
+  TeamOutlined,
+  BarChartOutlined,
+  LogoutOutlined,
+  UserOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  CarOutlined,
+  EnvironmentOutlined,
+  RocketOutlined,
+  FundOutlined,
+  SendOutlined,
+  BellOutlined,
+  AimOutlined,
+  HomeOutlined,
+
+  HistoryOutlined,
+  BankOutlined,
+  CompassOutlined,
+  BoxPlotOutlined,
+  CheckOutlined,
+  SettingOutlined,
+} from '@ant-design/icons';
+
+const { Sider, Content, Header } = Layout;
+const { Text } = Typography;
+
+const ROLE_LABELS = {
+  ADMIN: 'Admin',
+  MSME: 'User',
+  DRIVER: 'Driver',
+};
+
+const ROLE_COLORS = {
+  ADMIN: 'purple',
+  MSME: 'cyan',
+  DRIVER: 'volcano',
+};
+
+
+
+const getMenuItems = (role) => {
+  switch (role) {
+    case 'ADMIN':
+      return [
+        { key: '/admin', icon: <DashboardOutlined />, label: <Link to="/admin">Dashboard</Link>, title: 'Dashboard' },
+        { key: '/admin/shipments', icon: <RocketOutlined />, label: <Link to="/admin/shipments">Orders</Link>, title: 'Orders' },
+        { key: '/admin/track-orders', icon: <AimOutlined />, label: <Link to="/admin/track-orders">Track Orders</Link>, title: 'Track Orders' },
+        { key: '/admin/vehicles', icon: <CarOutlined />, label: <Link to="/admin/vehicles">Vehicles</Link>, title: 'Vehicles' },
+        { key: '/admin/trips', icon: <CompassOutlined />, label: <Link to="/admin/trips">Trip Planning</Link>, title: 'Trip Planning' },
+        { key: '/admin/companies', icon: <BankOutlined />, label: <Link to="/admin/companies">Companies</Link>, title: 'Companies' },
+        { type: 'divider' },
+        { key: '/admin/reports', icon: <BarChartOutlined />, label: <Link to="/admin/reports">Reports</Link>, title: 'Reports' },
+        { key: '/admin/users', icon: <TeamOutlined />, label: <Link to="/admin/users">Users</Link>, title: 'Users' },
+      ];
+    case 'MSME':
+      return [
+        { key: '/msme', icon: <DashboardOutlined />, label: <Link to="/msme">Dashboard</Link>, title: 'Dashboard' },
+        { key: '/msme/shipments', icon: <RocketOutlined />, label: <Link to="/msme/shipments">Shipments</Link>, title: 'Shipments' },
+        { key: '/msme/locations', icon: <EnvironmentOutlined />, label: <Link to="/msme/locations">Saved Locations</Link>, title: 'Saved Locations' },
+      ];
+    case 'DRIVER':
+      return [
+        { key: '/driver', icon: <DashboardOutlined />, label: <Link to="/driver">Dashboard</Link>, title: 'Dashboard' },
+        { key: '/driver/history', icon: <HistoryOutlined />, label: <Link to="/driver/history">Delivery History</Link>, title: 'Delivery History' },
+        { key: '/driver/trips', icon: <CompassOutlined />, label: <Link to="/driver/trips">My Trips</Link>, title: 'My Trips' },
+      ];
+    default:
+      return [];
+  }
+};
+
+export default function AppLayout({ children }) {
+  const { user, token, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
+  const { token: themeToken } = theme.useToken();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const {
+    notifications,
+    unreadCount,
+    hasNewNotif,
+    markAsRead,
+    markAllRead
+  } = useNotification();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const handleNotificationClick = async (notification) => {
+    if (!notification.read) {
+      await markAsRead(notification.id);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    await markAllRead();
+  };
+
+  const menuItems = getMenuItems(user?.role);
+
+  const basePath = user?.role === 'ADMIN' ? '/admin' : user?.role === 'DRIVER' ? '/driver' : '/msme';
+
+  const userMenuItems = [
+    {
+      key: 'info',
+      label: (
+        <div style={{ padding: '4px 0' }}>
+          <div style={{ fontWeight: 600 }}>{user?.name || user?.email}</div>
+          <Tag color={ROLE_COLORS[user?.role]} style={{ marginTop: 4 }}>
+            {ROLE_LABELS[user?.role] || user?.role}
+          </Tag>
+        </div>
+      ),
+      disabled: true,
+    },
+    { type: 'divider' },
+    {
+      key: 'settings',
+      icon: <SettingOutlined />,
+      label: 'Settings',
+      onClick: () => navigate(`${basePath}/settings`),
+    },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: 'Sign Out',
+      onClick: handleLogout,
+      danger: true,
+    },
+  ];
+
+  return (
+    <Layout style={{ minHeight: '100vh' }}>
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        onCollapse={setCollapsed}
+        width={240}
+        style={{
+          overflow: 'auto',
+          height: '100vh',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          background: 'linear-gradient(180deg, #1677ff 0%, #93c5fd 100%)',
+        }}
+        trigger={null}
+        theme="light"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <div
+            style={{
+              height: 64,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              padding: collapsed ? '0' : '0 20px',
+              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              flexShrink: 0,
+            }}
+          >
+            <BankOutlined style={{ fontSize: 24, color: '#fff' }} />
+            {!collapsed && (
+              <span
+                style={{
+                  color: '#ffffff',
+                  fontSize: 15,
+                  fontWeight: 700,
+                  marginLeft: 12,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Enterprise Logistics
+              </span>
+            )}
+          </div>
+
+          <Menu
+            mode="inline"
+            selectedKeys={[location.pathname]}
+            items={menuItems}
+            style={{ borderRight: 0, marginTop: 8, background: 'transparent', flex: 1, overflowY: 'auto' }}
+            className="custom-sidebar-menu"
+            inlineCollapsed={collapsed}
+            tooltipProps={{
+              placement: 'right',
+              overlayInnerStyle: { background: '#262626', color: '#fff', fontWeight: 500, fontSize: 13 },
+              overlayStyle: { zIndex: 1100 },
+            }}
+          />
+        </div>
+      </Sider>
+
+      <Layout style={{ marginLeft: collapsed ? 80 : 240, transition: 'margin-left 0.2s' }}>
+        <Header
+          style={{
+            background: '#fff',
+            padding: '0 24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+            height: 64,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {collapsed ? (
+              <MenuUnfoldOutlined
+                onClick={() => setCollapsed(false)}
+                style={{ fontSize: 18, cursor: 'pointer', color: '#595959' }}
+              />
+            ) : (
+              <MenuFoldOutlined
+                onClick={() => setCollapsed(true)}
+                style={{ fontSize: 18, cursor: 'pointer', color: '#595959' }}
+              />
+            )}
+            <Text strong style={{ fontSize: 16, color: '#262626' }}>
+              Enterprise Logistics Operations
+            </Text>
+          </div>
+
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', opacity: 0.8 }}>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Tooltip title="Back to Home">
+              <Button
+                type="text"
+                icon={<HomeOutlined />}
+                onClick={() => {
+                  const paths = {
+                    ADMIN: '/admin',
+                    MSME: '/msme',
+                    DRIVER: '/driver'
+                  };
+                  navigate(paths[user?.role] || '/');
+                }}
+                style={{ color: '#595959', fontSize: 16 }}
+              />
+            </Tooltip>
+            <Dropdown
+              open={notifOpen}
+              onOpenChange={setNotifOpen}
+              menu={{
+                style: { width: 320, maxHeight: 480, overflowY: 'auto' },
+                items: [
+                  {
+                    label: (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 0' }}>
+                        <Text type="secondary" style={{ fontSize: 12, fontWeight: 600 }}>NOTIFICATIONS</Text>
+                        {unreadCount > 0 && (
+                          <Button
+                            type="link"
+                            size="small"
+                            icon={<CheckOutlined />}
+                            onClick={(e) => { e.stopPropagation(); handleMarkAllRead(); }}
+                            style={{ fontSize: 11, padding: 0 }}
+                          >
+                            Mark all read
+                          </Button>
+                        )}
+                      </div>
+                    ),
+                    key: 'header',
+                    disabled: true,
+                  },
+                  { type: 'divider' },
+                  ...(notifications.length > 0 ? notifications.map(n => ({
+                    key: n.id,
+                    onClick: () => handleNotificationClick(n),
+                    style: { background: n.read ? 'transparent' : 'rgba(22, 119, 255, 0.04)' },
+                    label: (
+                      <div style={{ padding: '6px 0', maxWidth: 280 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                          <Text strong={!n.read} style={{ fontSize: 13, lineHeight: 1.4, flex: 1 }}>{n.title}</Text>
+                          {!n.read && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#1677ff', flexShrink: 0, marginTop: 4, display: 'inline-block' }} />}
+                        </div>
+                        <div style={{ fontSize: 12, color: '#595959', marginTop: 3, lineHeight: 1.4 }}>{n.message}</div>
+                        <div style={{ fontSize: 11, color: '#bfbfbf', marginTop: 4 }}>
+                          {new Date(n.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                    ),
+                  })) : [{
+                    key: 'empty',
+                    disabled: true,
+                    label: <div style={{ textAlign: 'center', padding: '16px 0', color: '#bfbfbf' }}>No notifications</div>
+                  }]),
+                  { type: 'divider' },
+                  {
+                    label: (
+                      <div style={{ textAlign: 'center', color: '#1677ff', fontWeight: 500 }}>
+                        View All Notifications
+                      </div>
+                    ),
+                    key: 'view-all',
+                    onClick: () => {
+                      setNotifOpen(false);
+                      const base = user?.role === 'ADMIN' ? '/admin' : user?.role === 'DRIVER' ? '/driver' : '/msme';
+                      navigate(`${base}/notifications`);
+                    }
+                  }
+                ]
+              }}
+              trigger={['click']}
+              placement="bottomRight"
+            >
+              <div style={{ cursor: 'pointer', padding: '0 8px', position: 'relative' }}>
+                <Badge count={unreadCount} size="small">
+                  <BellOutlined
+                    style={{
+                      fontSize: 18,
+                      color: '#595959',
+                      animation: hasNewNotif ? 'bellRing 0.5s ease-in-out 3' : 'none',
+                    }}
+                  />
+                </Badge>
+                {hasNewNotif && (
+                  <style>{`
+                    @keyframes bellRing {
+                      0%,100% { transform: rotate(0deg); }
+                      20% { transform: rotate(-15deg); }
+                      60% { transform: rotate(15deg); }
+                    }
+                  `}</style>
+                )}
+              </div>
+            </Dropdown>
+
+            <Dropdown menu={{ items: userMenuItems }} trigger={['click']} placement="bottomRight">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  borderRadius: 6,
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <Avatar
+                  style={{ backgroundColor: themeToken.colorPrimary }}
+                  icon={<UserOutlined />}
+                  size="small"
+                />
+                <div style={{ lineHeight: 1.3 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: '#262626' }}>
+                    {user?.name || user?.email?.split('@')[0]}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#8c8c8c' }}>
+                    {ROLE_LABELS[user?.role] || user?.role}
+                  </div>
+                </div>
+              </div>
+            </Dropdown>
+          </div>
+        </Header>
+
+        <Content
+          style={{
+            padding: 24,
+            background: '#f5f5f5',
+            minHeight: 'calc(100vh - 64px)',
+          }}
+        >
+          {children}
+        </Content>
+      </Layout>
+    </Layout>
+  );
+}
